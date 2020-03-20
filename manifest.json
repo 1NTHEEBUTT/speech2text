@@ -21,5 +21,6 @@
     "default_title": "Popup",
     "default_popup": "popup.html"
   },
+  "permissions": ["tabs"],
   "homepage_url": "https://github.com/tand826/speech2text"
 }

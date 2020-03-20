@@ -1,4 +1,18 @@
 body {
-  width: 200px;
+  width: 100%;
+  height: 100%;
+}
+
+#output {
+  width: 80%;
   height: 200px;
+}
+
+#interim {
+  width: 80%;
+  height: 200px;
+}
+
+#mic {
+  display: flex;
 }
