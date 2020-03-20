@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "author": "Takumi Ando",
+  "name": "Speech2Text",
+  "description": "Voice recognizer application for chrome extension.",
+  "version": "1.0",
+  "icons": {
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": "script-src 'self' https://maxcdn.bootstrapcdn.com https://ajax.googleapis.com; object-src 'self'",
+  "content_scripts": [
+    {
+      "matches": ["https://*/*"],
+      "js": ["contentscript.js"]
+    }
+  ],
+  "browser_action": {
+    "default_icon": "icons/icon32.png",
+    "default_title": "Popup",
+    "default_popup": "popup.html"
+  },
+  "homepage_url": "https://github.com/tand826/speech2text"
+}
