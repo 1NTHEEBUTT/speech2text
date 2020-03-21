@@ -10,28 +10,44 @@ const initializeRecognition = () => {
   recognition.continuous = true;
   recognition.interimResults = true;
   recognition.lang = "ja-JP";
-  recognition.onstart = e => showMessage("start");
+  recognition.onstart = e => {
+    showMessage("start");
+    recognition.status = "start";
+  };
   recognition.onaudiostart = e => {
     showMessage("audio start");
+    recognition.status = "audiostart";
     $(".fa-microphone-slash").css("display", "none");
     $(".fa-microphone.loading").css("display", "block");
   };
-  recognition.onsoundstart = e => showMessage("sound start");
+  recognition.onsoundstart = e => {
+    showMessage("sound start");
+    recognition.status = "soundstart";
+  };
   recognition.onspeechstart = e => {
     showMessage("speech start");
+    recognition.status = "speechstart";
     $(".fa-microphone.loading").css("display", "none");
     $(".fa-microphone.ready").css("display", "block");
   };
   recognition.onspeechend = e => {
     showMessage("speech end");
+    recognition.status = "speechend";
     $(".fa-microphone.ready").css("display", "none");
     $(".fa-microphone-slash").css("display", "block");
   };
-  recognition.onsoundend = e => showMessage("sound end");
-  recognition.onaudioend = e => showMessage("audio end");
+  recognition.onsoundend = e => {
+    showMessage("sound end");
+    recognition.status = "soundend";
+  };
+  recognition.onaudioend = e => {
+    showMessage("audio end");
+    recognition.status = "audioend";
+  };
   recognition.onend = e => {
     stop();
     showMessage("end");
+    recognition.status = "end";
   };
 
   recognition.onerror = e => {
