@@ -1,73 +1,89 @@
-navigator.webkitGetUserMedia(
-  {
-    audio: true
-  },
-  function(stream) {
-    alert("successed");
-    // Now you know that you have audio permission. Do whatever you want...
-  },
-  function() {
-    alert("failed");
-    // Aw. No permission (or no microphone available).
-  }
-);
+const recognition = new webkitSpeechRecognition();
+let recognizing;
 
-var recognizing;
-stop();
-var recognition = new webkitSpeechRecognition();
-recognition.continuous = true;
-recognition.interimResults = true;
-recognition.onend = stop();
-recognition.lang = "ja-JP";
-recognition.onstart = e => showMessage("start");
-//recognition.onaudiostart = e => showMessage("audio start");
-//recognition.onsoundstart = e => showMessage("sound start");
-recognition.onspeechstart = e => showMessage("speech start");
-recognition.onspeechend = e => showMessage("speech end");
-//recognition.onsoundend = e => showMessage("sound end");
-//recognition.onaudioend = e => showMessage("audio end");
-recognition.onend = e => showMessage("end");
+const initializeRecognition = () => {
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "ja-JP";
+  recognition.onstart = e => showMessage("start");
+  recognition.onaudiostart = e => {
+    showMessage("audio start");
+    $(".fa-microphone-slash").css("display", "none");
+    $(".fa-microphone.loading").css("display", "block");
+  };
+  recognition.onsoundstart = e => showMessage("sound start");
+  recognition.onspeechstart = e => {
+    showMessage("speech start");
+    $(".fa-microphone.loading").css("display", "none");
+    $(".fa-microphone.ready").css("display", "block");
+  };
+  recognition.onspeechend = e => {
+    showMessage("speech end");
+    $(".fa-microphone.ready").css("display", "none");
+    $(".fa-microphone-slash").css("display", "block");
+  };
+  recognition.onsoundend = e => showMessage("sound end");
+  recognition.onaudioend = e => showMessage("audio end");
+  recognition.onend = e => {
+    stop();
+    showMessage("end");
+  };
 
-recognition.onerror = e => showMessage("error");
-recognition.onnomatch = e => showMessage("nomatch");
+  recognition.onerror = e => showMessage(e);
+  recognition.onnomatch = e => showMessage("nomatch");
 
-recognition.onresult = function(event) {
-  console.log(event);
-  for (var i = event.resultIndex; i < event.results.length; ++i) {
-    if (event.results[i].isFinal) {
-      document.getElementById("output").value = event.results[i][0].transcript;
-    } else {
-      document.getElementById("interim").value = event.results[i][0].transcript;
+  recognition.onresult = event => {
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      let transcript = event.results[i][0].transcript;
+      event.results[i].isFinal
+        ? $("#result").val(transcript)
+        : $("#interim").val(transcript);
     }
-  }
+  };
 };
 
-function showMessage(msg) {
-  document.getElementById("status").textContent = msg;
-}
+const initializeIcons = () => {
+  $(".fa-microphone.ready").hide();
+  $(".fa-microphone.loading").hide();
+};
 
-function stop() {
+const getPermission = () => {
+  navigator.webkitGetUserMedia(
+    {
+      audio: true
+    },
+    stream => {
+      console.log(stream);
+      // Now you know that you have audio permission. Do whatever you want...
+    },
+    () => {
+      // Aw. No permission (or no microphone available).
+    }
+  );
+};
+
+const showMessage = msg => {
+  console.log(msg);
+};
+
+const stop = () => {
+  recognition.stop();
   recognizing = false;
-}
+};
 
-function start() {
+const start = () => {
+  recognition.start();
   recognizing = true;
-}
+};
 
-$(document).ready(function() {
-  document.getElementById("mic").addEventListener("click", function() {
-    toggleStartStop();
-  });
+const toggleStartStop = () => {
+  recognizing ? stop() : start();
+};
+
+$(document).on("click", ".statusIcon", () => {
+  toggleStartStop();
 });
 
-function toggleStartStop() {
-  if (recognizing) {
-    recognition.stop();
-    showMessage("Click to speak");
-    stop();
-  } else {
-    recognition.start();
-    showMessage("Click to stop");
-    start();
-  }
-}
+getPermission();
+initializeIcons();
+initializeRecognition();

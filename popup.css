@@ -1,18 +1,47 @@
 body {
-  width: 100%;
+  width: 300px;
   height: 100%;
 }
 
-#output {
+#result {
   width: 80%;
   height: 200px;
 }
 
 #interim {
   width: 80%;
-  height: 200px;
+  height: 100px;
+  color: gray;
 }
 
 #mic {
   display: flex;
+}
+
+#mic:hover {
+  cursor: pointer;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.fa-microphone.ready {
+  display: none;
+  color: #00cc00;
+}
+
+.fa-microphone-slash.notready {
+  display: inline-block;
+}
+
+.fa-microphone.loading {
+  display: none;
+  animation: blink 1s linear infinite;
 }
