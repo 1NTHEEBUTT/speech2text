@@ -1,6 +1,11 @@
 const recognition = new webkitSpeechRecognition();
 let recognizing;
 
+const getPermission = () => {
+  const permissionUrl = `chrome-extension://${chrome.runtime.id}/getPermission.html`;
+  chrome.tabs.create({ url: permissionUrl });
+};
+
 const initializeRecognition = () => {
   recognition.continuous = true;
   recognition.interimResults = true;
@@ -29,7 +34,11 @@ const initializeRecognition = () => {
     showMessage("end");
   };
 
-  recognition.onerror = e => showMessage(e);
+  recognition.onerror = e => {
+    if (e.error === "not-allowed") {
+      getPermission();
+    }
+  };
   recognition.onnomatch = e => showMessage("nomatch");
 
   recognition.onresult = event => {
@@ -45,21 +54,6 @@ const initializeRecognition = () => {
 const initializeIcons = () => {
   $(".fa-microphone.ready").hide();
   $(".fa-microphone.loading").hide();
-};
-
-const getPermission = () => {
-  navigator.webkitGetUserMedia(
-    {
-      audio: true
-    },
-    stream => {
-      console.log(stream);
-      // Now you know that you have audio permission. Do whatever you want...
-    },
-    () => {
-      // Aw. No permission (or no microphone available).
-    }
-  );
 };
 
 const showMessage = msg => {
@@ -84,6 +78,5 @@ $(document).on("click", ".statusIcon", () => {
   toggleStartStop();
 });
 
-getPermission();
 initializeIcons();
 initializeRecognition();
