@@ -45,3 +45,7 @@ body {
   display: none;
   animation: blink 1s linear infinite;
 }
+
+.statusIcon {
+  font-size: 2rem;
+}
