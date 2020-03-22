@@ -1,7 +1,8 @@
 const recognition = new webkitSpeechRecognition();
 let recognizing;
+let translateTo;
 const translationUrlBase =
-  "https://script.google.com/macros/s/AKfycby-yFBMqwBV-pFE4PXh1rD-z-_Ubz3fmcjjJCJclfQhSwk8Cffx/exec";
+  "https://script.google.com/macros/s/AKfycbzzIkZeCHyoajJgiQLspwNeBkeAK61NCYfCXbNlnQ/exec";
 
 const getPermission = () => {
   const permissionUrl = `chrome-extension://${chrome.runtime.id}/getPermission.html`;
@@ -83,6 +84,7 @@ const initializeRecognition = () => {
       if (event.results[i].isFinal) {
         $("#result").text(transcript);
         $("#interim").text("");
+        translate(transcript, recognition.lang, translateTo);
         navigator.clipboard.writeText(`${transcript}\n`);
       } else {
         $("#interim").text(transcript);
@@ -209,7 +211,7 @@ const saveTranslateTargetSelection = e => {
   const selectedTranslateTaregtCountry = Object.keys(langs)[
     e.target.selectedIndex
   ];
-  recognition.lang = langs[selectedTranslateTaregtCountry];
+  translateTo = langs[selectedTranslateTaregtCountry];
   stop();
   chrome.storage.sync.set({
     translateTarget: langs[selectedTranslateTaregtCountry]
@@ -219,6 +221,7 @@ const saveTranslateTargetSelection = e => {
 const addLangSelection = () => {
   chrome.storage.sync.get("code", selected => {
     const selectedCode = selected.code;
+    recognition.lang = selectedCode;
     const langSelection = $("#langSelection");
     const dropdown = $("<select></select>");
     for (let country in langs) {
@@ -227,7 +230,6 @@ const addLangSelection = () => {
         .val(langs[country]);
       if (langs[country] === selectedCode) {
         langOption.prop("selected", true);
-        recognition.lang = selectedCode;
       }
       dropdown.append(langOption);
     }
@@ -238,8 +240,8 @@ const addLangSelection = () => {
 
 const addTranslateTargetSelection = () => {
   chrome.storage.sync.get("translateTarget", selected => {
-    console.log(selected);
     const selectedCode = selected.translateTarget;
+    translateTo = selectedCode;
     const langSelection = $("#translateTargetSelection");
     const dropdown = $("<select></select>");
     for (let country in langs) {
@@ -248,7 +250,6 @@ const addTranslateTargetSelection = () => {
         .val(langs[country]);
       if (langs[country] === selectedCode) {
         langOption.prop("selected", true);
-        recognition.lang = selectedCode;
       }
       dropdown.append(langOption);
     }
@@ -258,15 +259,19 @@ const addTranslateTargetSelection = () => {
 };
 
 const translate = (text, source, target) => {
+  const sourceCode = source.split("-")[0];
+  const targetCode = target.split("-")[0];
   let res = fetch(
-    `https://script.google.com/macros/s/AKfycbzzIkZeCHyoajJgiQLspwNeBkeAK61NCYfCXbNlnQ/exec?text=${text}&source=${source}&target=${target}`,
+    `${translationUrlBase}?text=${text}&source=${sourceCode}&target=${targetCode}`,
     { mode: "no-cors" }
   )
     .then(res => {
+      console.log(res);
       res.json();
     })
     .then(res => {
-      console.log(res.translated);
+      console.log(res);
+      $("#translated").text(res.translated);
     });
 };
 
