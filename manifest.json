@@ -9,7 +9,7 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "content_security_policy": "script-src 'self' https://maxcdn.bootstrapcdn.com https://ajax.googleapis.com; object-src 'self'",
+  "content_security_policy": "script-src 'self' https://maxcdn.bootstrapcdn.com https://ajax.googleapis.com https://script.google.com/macros/s/AKfycby-yFBMqwBV-pFE4PXh1rD-z-_Ubz3fmcjjJCJclfQhSwk8Cffx; object-src 'self'",
   "content_scripts": [
     {
       "matches": ["https://*/*"],
@@ -21,6 +21,6 @@
     "default_title": "Popup",
     "default_popup": "popup.html"
   },
-  "permissions": ["tabs"],
+  "permissions": ["tabs", "storage"],
   "homepage_url": "https://github.com/tand826/speech2text"
 }

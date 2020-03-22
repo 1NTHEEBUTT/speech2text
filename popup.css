@@ -3,19 +3,28 @@ body {
   height: 100%;
 }
 
+#header {
+  width: 316px;
+  margin: -8px 0 8px -8px;
+  padding: 1px;
+  background-color: gray;
+  font-size: 0.7rem;
+  color: white;
+  text-align: center;
+}
+
 #result {
   width: 80%;
-  height: 200px;
 }
 
 #interim {
   width: 80%;
-  height: 100px;
   color: gray;
 }
 
 #mic {
   display: flex;
+  justify-content: center;
 }
 
 #mic:hover {
@@ -48,4 +57,10 @@ body {
 
 .statusIcon {
   font-size: 2rem;
+}
+
+#langSelection,
+#translateTargetSelection {
+  display: flex;
+  justify-content: space-between;
 }

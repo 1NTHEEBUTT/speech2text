@@ -1,5 +1,7 @@
 const recognition = new webkitSpeechRecognition();
 let recognizing;
+const translationUrlBase =
+  "https://script.google.com/macros/s/AKfycby-yFBMqwBV-pFE4PXh1rD-z-_Ubz3fmcjjJCJclfQhSwk8Cffx/exec";
 
 const getPermission = () => {
   const permissionUrl = `chrome-extension://${chrome.runtime.id}/getPermission.html`;
@@ -7,18 +9,26 @@ const getPermission = () => {
 };
 
 const initializeRecognition = () => {
+  const statuses = [
+    "start",
+    "audiostart",
+    "soundstart",
+    "speechstart",
+    "speechend",
+    "soundend",
+    "audioend",
+    "end"
+  ];
   recognition.continuous = true;
   recognition.interimResults = true;
-  recognition.lang = "ja-JP";
   recognition.onstart = e => {
     showMessage("start");
     recognition.status = "start";
+    iconForLoading();
   };
   recognition.onaudiostart = e => {
     showMessage("audio start");
     recognition.status = "audiostart";
-    $(".fa-microphone-slash").css("display", "none");
-    $(".fa-microphone.loading").css("display", "block");
   };
   recognition.onsoundstart = e => {
     showMessage("sound start");
@@ -27,27 +37,37 @@ const initializeRecognition = () => {
   recognition.onspeechstart = e => {
     showMessage("speech start");
     recognition.status = "speechstart";
-    $(".fa-microphone.loading").css("display", "none");
-    $(".fa-microphone.ready").css("display", "block");
+    iconForReady();
   };
   recognition.onspeechend = e => {
     showMessage("speech end");
     recognition.status = "speechend";
-    $(".fa-microphone.ready").css("display", "none");
-    $(".fa-microphone-slash").css("display", "block");
+    iconForStop();
   };
   recognition.onsoundend = e => {
     showMessage("sound end");
+    if (recognition.status != "speechend") {
+      showMessage(`[Error] Latest status is ${recognition.status}`);
+      iconForStop();
+    }
     recognition.status = "soundend";
   };
   recognition.onaudioend = e => {
     showMessage("audio end");
+    if (recognition.status != "soundend") {
+      showMessage(`[Error] Latest status is ${recognition.status}`);
+      iconForStop();
+    }
     recognition.status = "audioend";
   };
   recognition.onend = e => {
-    stop();
     showMessage("end");
+    if (recognition.status != "audioend") {
+      showMessage(`[Error] Latest status is ${recognition.status}`);
+      iconForStop();
+    }
     recognition.status = "end";
+    recognizing = false;
   };
 
   recognition.onerror = e => {
@@ -60,16 +80,33 @@ const initializeRecognition = () => {
   recognition.onresult = event => {
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       let transcript = event.results[i][0].transcript;
-      event.results[i].isFinal
-        ? $("#result").val(transcript)
-        : $("#interim").val(transcript);
+      if (event.results[i].isFinal) {
+        $("#result").text(transcript);
+        $("#interim").text("");
+        navigator.clipboard.writeText(`${transcript}\n`);
+      } else {
+        $("#interim").text(transcript);
+      }
     }
   };
 };
 
-const initializeIcons = () => {
-  $(".fa-microphone.ready").hide();
-  $(".fa-microphone.loading").hide();
+const iconForStop = () => {
+  $(".fa-microphone-slash").css("display", "block");
+  $(".fa-microphone.loading").css("display", "none");
+  $(".fa-microphone.ready").css("display", "none");
+};
+
+const iconForLoading = () => {
+  $(".fa-microphone-slash").css("display", "none");
+  $(".fa-microphone.loading").css("display", "block");
+  $(".fa-microphone.ready").css("display", "none");
+};
+
+const iconForReady = () => {
+  $(".fa-microphone-slash").css("display", "none");
+  $(".fa-microphone.loading").css("display", "none");
+  $(".fa-microphone.ready").css("display", "block");
 };
 
 const showMessage = msg => {
@@ -94,5 +131,147 @@ $(document).on("click", ".statusIcon", () => {
   toggleStartStop();
 });
 
-initializeIcons();
+const langs = {
+  Afrikaans: "af-ZA",
+  "Bahasa Indonesia": "id-ID",
+  "Bahasa Melayu": "ms-MY",
+  Català: "ca-ES",
+  Čeština: "cs-CZ",
+  Deutsch: "de-DE",
+  "English [Australia]": "en-AU",
+  "English [Canada]": "en-CA",
+  "English [India]": "en-IN",
+  "English [New Zealand]": "en-NZ",
+  "English [South Africa]": "en-ZA",
+  "English [United Kingdom]": "en-GB",
+  "English [United State]": "en-US",
+  "Español [Argentina]": "es-AR",
+  "Español [Bolivia]": "es-BO",
+  "Español [Chile]": "es-CL",
+  "Español [Colombia]": "es-CO",
+  "Español [Costa Rica]": "es-CR",
+  "Español [Ecuador]": "es-EC",
+  "Español [El Salvador]": "es-SV",
+  "Español [España]": "es-ES",
+  "Español [Estados Unidos]": "es-US",
+  "Español [Guatemala]": "es-GT",
+  "Español [Honduras]": "es-HN",
+  "Español [México]": "es-MX",
+  "Español [Nicaragua]": "es-NI",
+  "Español [Panamá]": "es-PA",
+  "Español [Paraguay]": "es-PY",
+  "Español [Perú]": "es-PE",
+  "Español [Puerto Rico]": "es-PR",
+  "Español [República Dominicana]": "es-DO",
+  "Español [Uruguay]": "es-UY",
+  "Español [Venezuel]": "es-VE",
+  Euskara: "eu-ES",
+  Français: "fr-FR",
+  Galego: "gl-ES",
+  Hrvatski: "hr_HR",
+  IsiZulu: "zu-ZA",
+  Íslenska: "is-IS",
+  "Italiano [Italia]": "it-IT",
+  "Italiano [Svizzera]": "it-CH",
+  Magyar: "hu-HU",
+  Nederlands: "nl-NL",
+  "Norsk bokmål": "nb-NO",
+  Polski: "pl-PL",
+  "Português [Brasil]": "pt-BR",
+  "Português [Portugal]": "pt-PT",
+  Română: "ro-RO",
+  Slovenčina: "sk-SK",
+  Suomi: "fi-FI",
+  Svenska: "sv-SE",
+  Türkçe: "tr-TR",
+  български: "bg-BG",
+  Pусский: "ru-RU",
+  Српски: "sr-RS",
+  한국어: "ko-KR",
+  "中文 [普通话 (中国大陆)": "cmn-Hans-CN",
+  "中文 [普通话 (香港)]": "cmn-Hans-HK",
+  "中文 (台灣)": "cmn-Hant-TW",
+  "中文 [粵語 (香港)]": "yue-Hant-HK",
+  日本語: "ja-JP",
+  "Lingua latīna": "la"
+};
+
+const saveCountrySelection = e => {
+  const selectedLangCountry = Object.keys(langs)[e.target.selectedIndex];
+  recognition.lang = langs[selectedLangCountry];
+  stop();
+  chrome.storage.sync.set({
+    code: langs[selectedLangCountry]
+  });
+};
+
+const saveTranslateTargetSelection = e => {
+  const selectedTranslateTaregtCountry = Object.keys(langs)[
+    e.target.selectedIndex
+  ];
+  recognition.lang = langs[selectedTranslateTaregtCountry];
+  stop();
+  chrome.storage.sync.set({
+    translateTarget: langs[selectedTranslateTaregtCountry]
+  });
+};
+
+const addLangSelection = () => {
+  chrome.storage.sync.get("code", selected => {
+    const selectedCode = selected.code;
+    const langSelection = $("#langSelection");
+    const dropdown = $("<select></select>");
+    for (let country in langs) {
+      let langOption = $("<option></option>")
+        .text(country)
+        .val(langs[country]);
+      if (langs[country] === selectedCode) {
+        langOption.prop("selected", true);
+        recognition.lang = selectedCode;
+      }
+      dropdown.append(langOption);
+    }
+    langSelection.append(dropdown);
+    dropdown.on("change", saveCountrySelection);
+  });
+};
+
+const addTranslateTargetSelection = () => {
+  chrome.storage.sync.get("translateTarget", selected => {
+    console.log(selected);
+    const selectedCode = selected.translateTarget;
+    const langSelection = $("#translateTargetSelection");
+    const dropdown = $("<select></select>");
+    for (let country in langs) {
+      let langOption = $("<option></option>")
+        .text(country)
+        .val(langs[country]);
+      if (langs[country] === selectedCode) {
+        langOption.prop("selected", true);
+        recognition.lang = selectedCode;
+      }
+      dropdown.append(langOption);
+    }
+    langSelection.append(dropdown);
+    dropdown.on("change", saveTranslateTargetSelection);
+  });
+};
+
+const translate = (text, source, target) => {
+  let res = fetch(
+    `https://script.google.com/macros/s/AKfycbzzIkZeCHyoajJgiQLspwNeBkeAK61NCYfCXbNlnQ/exec?text=${text}&source=${source}&target=${target}`,
+    { mode: "no-cors" }
+  )
+    .then(res => {
+      res.json();
+    })
+    .then(res => {
+      console.log(res.translated);
+    });
+};
+
+addLangSelection();
+addTranslateTargetSelection();
+iconForStop();
 initializeRecognition();
+start();
