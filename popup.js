@@ -1,8 +1,7 @@
-import { getDefaultSettings } from "http2";
-
 const recognition = new webkitSpeechRecognition();
 let recognizing;
 let translateTo;
+const maxHistory = 5;
 const translationUrlBase =
   "https://script.google.com/macros/s/AKfycbzzIkZeCHyoajJgiQLspwNeBkeAK61NCYfCXbNlnQ/exec";
 
@@ -88,7 +87,6 @@ const initializeRecognition = () => {
         $("#interim").text("");
         translate(transcript, recognition.lang, translateTo);
         navigator.clipboard.writeText(`${transcript}\n`);
-        saveHistory(transcript, "original");
       } else {
         $("#interim").text(transcript);
       }
@@ -269,6 +267,19 @@ const addTranslateTargetSelection = () => {
   });
 };
 
+const getDate = () => {
+  let now = new Date();
+  const date = {
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    date: now.getDate(),
+    hour: now.getHours(),
+    min: now.getMinutes(),
+    sec: now.getSeconds()
+  };
+  return date;
+};
+
 const translate = (text, source, target) => {
   const sourceCode = source.split("-")[0];
   const targetCode = target.split("-")[0];
@@ -282,13 +293,13 @@ const translate = (text, source, target) => {
     .then(res => {
       const translated = res.translated;
       $("#translated").text(translated);
-      let now = new Date();
+      let date = getDate();
       const result = {
         original: text,
         translated: translated,
         source: source,
         target: target,
-        date: getDate()
+        date: date
       };
       saveHistory(result);
     })
@@ -296,47 +307,89 @@ const translate = (text, source, target) => {
       console.log(e);
     });
 };
-const getDate = () => {
-  const date = {
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
-    date: now.getDate(),
-    hour: now.getHours(),
-    min: now.getMinutes(),
-    sec: now.getSeconds()
-  };
-  return date;
-};
+
 const saveHistory = result => {
-  chrome.storage.sync.get(history, res => {
+  let history;
+  chrome.storage.sync.get("history", res => {
+    if (typeof res.history === "undefined") {
+      history = new Array();
+    } else {
+      history = res.history;
+    }
+    history.push(result);
+    while (history.length > maxHistory) {
+      history.shift();
+    }
     chrome.storage.sync.set({
-      history: res
+      history: history
     });
   });
 };
 
+const updateHistory = () => {
+  chrome.storage.onChanged.addListener(() => {
+    loadHistory();
+  });
+};
+
 const loadHistory = () => {
-  chrome.storage.onChanged.addListener((changes, namespace) => {
-    for (let key in changes) {
-      let val = changes[key].newValue;
-      let leftBlock = $("<div></div>", { addClass: "original" });
-      let rightBlock = $("<div></div>", { addClass: "translated" });
-      let textBlock = $("<span></span>", { addClass: "textBlock" });
-      let langCountry = $("<div></div>", { addClass: "usedLangCountry" });
-      let langCode = $("<div></div>", { addClass: "usedLangCode" });
-      let recordedDate = $("<span></span>", { addClass: "recordedDate" });
-      $("#history").text(newValue);
+  chrome.storage.sync.get("history", res => {
+    let history = res.history.reverse();
+    $("#historyView").empty();
+    for (let i = 0; i < history.length; i++) {
+      let record = history[i];
+      let block = getHistoryBlock(record);
+      $("#historyView").append(block);
     }
   });
 };
 
+const getHistoryBlock = record => {
+  let originalBlock = $("<div></div>", { addClass: "original block" });
+  let translatedBlock = $("<div></div>", { addClass: "translated block" });
+  let originalText = $("<span></span>", { addClass: "text" }).text(
+    record.original
+  );
+  let translatedText = $("<span></span>", { addClass: "text" }).text(
+    record.translated
+  );
+  let originalCode = $("<div></div>", { addClass: "code" }).text(record.source);
+  let originalCountry = $("<div></div>", { addClass: "country" }).text(
+    code2lang(record.source)
+  );
+  let translatedCode = $("<div></div>", { addClass: "code" }).text(
+    record.target
+  );
+  let translatedCountry = $("<div></div>", { addClass: "country" }).text(
+    code2lang(record.target)
+  );
+  let recordedDate = $("<span></span>", { addClass: "recordedDate" }).text(
+    date2Line(record.date)
+  );
+  let block = $("<div></div>", { addClass: "historyBlock" });
+
+  originalBlock.append(originalText);
+  originalBlock.append(originalCode);
+  originalBlock.append(originalCountry);
+  translatedBlock.append(translatedText);
+  translatedBlock.append(translatedCode);
+  translatedBlock.append(translatedCountry);
+  block.append(originalBlock);
+  block.append(translatedBlock);
+  //block.append(recordedDate);
+  return block;
+};
+
+const date2Line = date => {
+  return `${date.year}.${date.month}.${date.date} ${date.hour}:${date.min}`;
+};
+
 const enableCopyOnClickResults = () => {
-  $(document).on("click", "#result", () => {
-    const text = $("#result").text();
-    navigator.clipboard.writeText(`${text}\n`);
-  });
-  $(document).on("click", "#translated", () => {
-    const text = $("#translated").text();
+  $(document).on("click", ".translated, .original", e => {
+    const text = $(e.target)
+      .parent()
+      .children("span")
+      .text();
     navigator.clipboard.writeText(`${text}\n`);
   });
 };
@@ -346,5 +399,6 @@ addTranslateTargetSelection();
 iconForStop();
 initializeRecognition();
 loadHistory();
+updateHistory();
 enableCopyOnClickResults();
 setTimeout(start, 1000);

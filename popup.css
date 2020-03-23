@@ -69,10 +69,44 @@ body {
 }
 
 #historyHeader,
-#resultHeader {
+#resultHeader,
+#settingsHeader {
   margin: 8px 0 8px -8px;
 }
 
 .content {
   min-height: 30px;
+}
+
+.historyBlock {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid darkgrey;
+}
+
+.block {
+  width: 140px;
+  padding: 3px;
+}
+
+.block:active {
+  filter: drop-shadow(3px 3px 3px lightgreen);
+  transition: filter 0s;
+}
+
+.block:hover {
+  cursor: pointer;
+}
+
+.code,
+.country,
+.recordedDate {
+  font-size: 0.5rem;
+  color: lightgray;
+  text-align: right;
+}
+
+.settings {
+  text-align: right;
+  font-size: 0.5rem;
 }
