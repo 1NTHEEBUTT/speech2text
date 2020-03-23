@@ -1,3 +1,5 @@
+import { getDefaultSettings } from "http2";
+
 const recognition = new webkitSpeechRecognition();
 let recognizing;
 let translateTo;
@@ -86,6 +88,7 @@ const initializeRecognition = () => {
         $("#interim").text("");
         translate(transcript, recognition.lang, translateTo);
         navigator.clipboard.writeText(`${transcript}\n`);
+        saveHistory(transcript, "original");
       } else {
         $("#interim").text(transcript);
       }
@@ -198,6 +201,14 @@ const langs = {
   "Lingua latīna": "la"
 };
 
+const code2lang = code => {
+  for (let key in langs) {
+    if (langs[key] === code) {
+      return key;
+    }
+  }
+};
+
 const saveCountrySelection = e => {
   const selectedLangCountry = Object.keys(langs)[e.target.selectedIndex];
   recognition.lang = langs[selectedLangCountry];
@@ -266,18 +277,74 @@ const translate = (text, source, target) => {
     { mode: "no-cors" }
   )
     .then(res => {
-      return res.text();
+      return res.json();
     })
     .then(res => {
-      $("#translated").text(JSON.parse(res).translated);
+      const translated = res.translated;
+      $("#translated").text(translated);
+      let now = new Date();
+      const result = {
+        original: text,
+        translated: translated,
+        source: source,
+        target: target,
+        date: getDate()
+      };
+      saveHistory(result);
     })
     .catch(e => {
       console.log(e);
     });
+};
+const getDate = () => {
+  const date = {
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    date: now.getDate(),
+    hour: now.getHours(),
+    min: now.getMinutes(),
+    sec: now.getSeconds()
+  };
+  return date;
+};
+const saveHistory = result => {
+  chrome.storage.sync.get(history, res => {
+    chrome.storage.sync.set({
+      history: res
+    });
+  });
+};
+
+const loadHistory = () => {
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    for (let key in changes) {
+      let val = changes[key].newValue;
+      let leftBlock = $("<div></div>", { addClass: "original" });
+      let rightBlock = $("<div></div>", { addClass: "translated" });
+      let textBlock = $("<span></span>", { addClass: "textBlock" });
+      let langCountry = $("<div></div>", { addClass: "usedLangCountry" });
+      let langCode = $("<div></div>", { addClass: "usedLangCode" });
+      let recordedDate = $("<span></span>", { addClass: "recordedDate" });
+      $("#history").text(newValue);
+    }
+  });
+};
+
+const enableCopyOnClickResults = () => {
+  $(document).on("click", "#result", () => {
+    const text = $("#result").text();
+    navigator.clipboard.writeText(`${text}\n`);
+  });
+  $(document).on("click", "#translated", () => {
+    const text = $("#translated").text();
+    navigator.clipboard.writeText(`${text}\n`);
+  });
 };
 
 addLangSelection();
 addTranslateTargetSelection();
 iconForStop();
 initializeRecognition();
+loadHistory();
+enableCopyOnClickResults();
 setTimeout(start, 1000);

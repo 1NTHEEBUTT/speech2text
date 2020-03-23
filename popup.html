@@ -16,7 +16,7 @@
   </head>
 
   <body>
-    <div id="header">Speech2Clipboard</div>
+    <div id="header" class="header">Speech2Clipboard</div>
     <div id="mic">
       <i class="fa fa-microphone ready statusIcon" aria-hidden="true"></i>
       <i class="fa fa-microphone loading statusIcon" aria-hidden="true"></i>
@@ -29,12 +29,14 @@
       <div id="langSelection">Speak as :</div>
       <div id="translateTargetSelection">Translate to :</div>
     </div>
-    <div id="output">
+    <div id="resultHeader" class="header">Result</div>
+    <div id="output" class="content">
       <span id="interim"></span>
-      <span id="result"></span>
-      <span id="translated"></span>
+      <div id="result"></div>
+      <div id="translated"></div>
     </div>
-    <div id="history"><i class="fa fa-history" aria-hidden="true"></i></div>
+    <div id="historyHeader" class="header">History</div>
+    <div id="historyView" class="content"></div>
     <script src="popup.js"></script>
   </body>
 </html>

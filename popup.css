@@ -3,14 +3,17 @@ body {
   height: 100%;
 }
 
-#header {
+.header {
   width: 316px;
-  margin: -8px 0 8px -8px;
   padding: 1px;
   background-color: gray;
   font-size: 0.7rem;
   color: white;
   text-align: center;
+}
+
+#header {
+  margin: -8px 0 8px -8px;
 }
 
 #result {
@@ -63,4 +66,13 @@ body {
 #translateTargetSelection {
   display: flex;
   justify-content: space-between;
+}
+
+#historyHeader,
+#resultHeader {
+  margin: 8px 0 8px -8px;
+}
+
+.content {
+  min-height: 30px;
 }
