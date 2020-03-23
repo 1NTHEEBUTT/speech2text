@@ -261,17 +261,18 @@ const addTranslateTargetSelection = () => {
 const translate = (text, source, target) => {
   const sourceCode = source.split("-")[0];
   const targetCode = target.split("-")[0];
-  let res = fetch(
+  fetch(
     `${translationUrlBase}?text=${text}&source=${sourceCode}&target=${targetCode}`,
     { mode: "no-cors" }
   )
     .then(res => {
-      console.log(res);
-      res.json();
+      return res.text();
     })
     .then(res => {
-      console.log(res);
-      $("#translated").text(res.translated);
+      $("#translated").text(JSON.parse(res).translated);
+    })
+    .catch(e => {
+      console.log(e);
     });
 };
 
@@ -279,4 +280,4 @@ addLangSelection();
 addTranslateTargetSelection();
 iconForStop();
 initializeRecognition();
-start();
+setTimeout(start, 1000);
