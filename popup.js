@@ -3,7 +3,7 @@ let recognizing;
 let translateTo;
 const maxHistory = 5;
 const translationUrlBase =
-  "https://script.google.com/macros/s/AKfycbzzIkZeCHyoajJgiQLspwNeBkeAK61NCYfCXbNlnQ/exec";
+  "https://script.google.com/macros/s/AKfycbwrFsPW-MQMeP5-sdIVS3ZfJezgGnTmtYwtv4j2ToN_HAWrlk4n/exec";
 
 const getPermission = () => {
   const permissionUrl = `chrome-extension://${chrome.runtime.id}/getPermission.html`;
@@ -31,6 +31,7 @@ const initializeRecognition = () => {
   recognition.onaudiostart = e => {
     showMessage("audio start");
     recognition.status = "audiostart";
+    iconForReady();
   };
   recognition.onsoundstart = e => {
     showMessage("sound start");
@@ -39,7 +40,6 @@ const initializeRecognition = () => {
   recognition.onspeechstart = e => {
     showMessage("speech start");
     recognition.status = "speechstart";
-    iconForReady();
   };
   recognition.onspeechend = e => {
     showMessage("speech end");
@@ -285,43 +285,46 @@ const translate = (text, source, target) => {
   const targetCode = target.split("-")[0];
   fetch(
     `${translationUrlBase}?text=${text}&source=${sourceCode}&target=${targetCode}`,
-    { mode: "no-cors" }
+    { mode: "cors" }
   )
     .then(res => {
-      return res.json();
+      console.log(res);
+      return res.text();
     })
     .then(res => {
-      const translated = res.translated;
+      console.log(res);
+      const translated = JSON.parse(res).translated;
       $("#translated").text(translated);
-      let date = getDate();
       const result = {
         original: text,
         translated: translated,
         source: source,
         target: target,
-        date: date
+        date: getDate()
       };
       saveHistory(result);
     })
     .catch(e => {
       console.log(e);
+      const result = {
+        original: text,
+        translated: "",
+        source: source,
+        target: "",
+        date: getDate()
+      };
+      saveHistory(result);
     });
 };
 
 const saveHistory = result => {
-  let history;
   chrome.storage.sync.get("history", res => {
-    if (typeof res.history === "undefined") {
-      history = new Array();
-    } else {
-      history = res.history;
-    }
-    history.push(result);
-    while (history.length > maxHistory) {
-      history.shift();
+    res.history.push(result);
+    while (res.history.length > maxHistory) {
+      res.history.shift();
     }
     chrome.storage.sync.set({
-      history: history
+      history: res.history
     });
   });
 };
@@ -394,8 +397,31 @@ const enableCopyOnClickResults = () => {
   });
 };
 
+const initializeStorage = () => {
+  chrome.storage.sync.get("history", res => {
+    if (typeof res.history === "undefined") {
+      chrome.storage.sync.set({ history: [] });
+    }
+  });
+};
+
+let testUrl = () => {
+  fetch(
+    `${translationUrlBase}?text=%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%82%8F&source=ja-JP&target=en-US`,
+    { mode: "cors", referrer: "strict-origin-when-cross-origin" }
+  )
+    .then(res => {
+      console.log(res);
+      return res.json();
+    })
+    .then(res => {
+      console.log(res);
+    });
+};
+
 addLangSelection();
 addTranslateTargetSelection();
+initializeStorage();
 iconForStop();
 initializeRecognition();
 loadHistory();
